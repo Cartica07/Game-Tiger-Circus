@@ -2,12 +2,53 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Eco-Sátira</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tiger Circus</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+    @keyframes rotar {
+        0%   { transform: rotate(0deg); }
+        50%  { transform: rotate(90deg); }
+        100% { transform: rotate(90deg); }
+    }
+    </style>
 </head>
 <body>
+
     <canvas id="gameCanvas"></canvas>
+
+    <!-- Overlay rotación -->
+    <div id="rotateOverlay" style="
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: #0a1a0a;
+        z-index: 9999;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-family: Arial, sans-serif;
+        text-align: center;
+    ">
+        <div style="font-size: 64px; animation: rotar 1.5s infinite;">📱</div>
+        <p style="font-size: 22px; font-weight: bold; margin-top: 20px;">Gira tu dispositivo</p>
+        <p style="font-size: 15px; color: #aaa;">El juego se juega en horizontal</p>
+    </div>
+
+    <script>
+    function verificarOrientacion() {
+        const overlay = document.getElementById("rotateOverlay");
+        const esVertical = window.innerHeight > window.innerWidth;
+        const esMovil = Math.min(window.innerWidth, window.innerHeight) < 1024;
+        overlay.style.display = (esVertical && esMovil) ? "flex" : "none";
+    }
+    window.addEventListener("resize", verificarOrientacion);
+    window.addEventListener("orientationchange", verificarOrientacion);
+    verificarOrientacion();
+    </script>
+
     <script src="game.js"></script>
+
 </body>
 </html>

@@ -13,6 +13,14 @@ const imgAguaLimpia = new Image(); imgAguaLimpia.src = "agua_limpia.png";
 const imgAguaSucia = new Image(); imgAguaSucia.src = "agua_sucia.png";
 const imgPiso = new Image(); imgPiso.src = "piso.png";
 
+
+const RES_BASE_ANCHO = 1366;
+const RES_BASE_ALTO = 550;
+
+let ANCHO_PANTALLA = RES_BASE_ANCHO;
+let ALTO_PANTALLA = RES_BASE_ALTO;
+let ALTURA_SUELO;
+
 // --- MÚSICA DE FONDO ---
 const musica = new Audio("sonido.mpeg");
 musica.loop = true;
@@ -85,33 +93,42 @@ const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 const canvasChroma = document.createElement("canvas");
 const ctxChroma = canvasChroma.getContext("2d", { willReadFrequently: true });
-let ANCHO_PANTALLA, ALTO_PANTALLA, ALTURA_SUELO;
+
 
 function ajustarResolucion() {
-    // En móvil vertical, rotamos lógicamente para siempre usar landscape
-    const esVertical = window.innerHeight > window.innerWidth;
-    
-    if (esVertical) {
-        ANCHO_PANTALLA = window.innerHeight;
-        ALTO_PANTALLA = window.innerWidth;
-        canvas.width = ANCHO_PANTALLA;
-        canvas.height = ALTO_PANTALLA;
-        canvas.style.width = window.innerHeight + "px";
-        canvas.style.height = window.innerWidth + "px";
-        canvas.style.transformOrigin = "top left";
-        canvas.style.transform = "rotate(90deg) translateY(-100%)";
-    } else {
-        ANCHO_PANTALLA = window.innerWidth;
-        ALTO_PANTALLA = window.innerHeight;
-        canvas.width = ANCHO_PANTALLA;
-        canvas.height = ALTO_PANTALLA;
-        canvas.style.transform = "";
-        canvas.style.width = "";
-        canvas.style.height = "";
-    }
+
+    // El canvas interno siempre tiene la misma resolución
+    canvas.width = RES_BASE_ANCHO;
+    canvas.height = RES_BASE_ALTO;
+
+    // Escala para que entre en cualquier pantalla
+    const escalaX = window.innerWidth / RES_BASE_ANCHO;
+    const escalaY = window.innerHeight / RES_BASE_ALTO;
+
+    const escala = Math.min(escalaX, escalaY);
+
+    const anchoFinal = RES_BASE_ANCHO * escala;
+    const altoFinal = RES_BASE_ALTO * escala;
+
+    canvas.style.width = anchoFinal + "px";
+    canvas.style.height = altoFinal + "px";
+
+    // Centrar el canvas
+    canvas.style.position = "fixed";
+    canvas.style.left = ((window.innerWidth - anchoFinal) / 2) + "px";
+    canvas.style.top = ((window.innerHeight - altoFinal) / 2) + "px";
+
+    canvas.style.transform = "";
+    canvas.style.transformOrigin = "";
+
+    // La lógica del juego SIEMPRE usa la resolución base
+    ANCHO_PANTALLA = RES_BASE_ANCHO;
+    ALTO_PANTALLA = RES_BASE_ALTO;
 
     ALTURA_SUELO = ALTO_PANTALLA - 60;
+
     jugador.y = ALTURA_SUELO - jugador.alto;
+
     jefe.x = ANCHO_PANTALLA - 200;
     jefe.y = ALTURA_SUELO - jefe.alto + 40;
 }
@@ -517,13 +534,13 @@ function dibujarGameOver() {
     // --- VIDEO ---
     const vidAreaY = py + zonaLetrero;
     const vidAreaH = zonaVideo;
-    const vidMaxW = pw * 0.92;
-    const vidMaxH = vidAreaH * 0.95;
+    const vidMaxW = pw * 1.4;  // más ancho que el panel
+    const vidMaxH = vidAreaH * 1.6;  // más alto que su zona
     let vidW = vidMaxW;
     let vidH = vidW * (9 / 16);
     if (vidH > vidMaxH) { vidH = vidMaxH; vidW = vidH * (16 / 9); }
     const vidX = (ANCHO_PANTALLA - vidW) / 2;
-    const vidY = vidAreaY + (vidAreaH - vidH) / 2;
+    const vidY = py + 5;  // sube hasta casi el borde del panel, invade el letrero
     dibujarVideoConChroma(vidX, vidY, vidW, vidH);
 
     // --- PUNTAJES ---
@@ -648,6 +665,8 @@ function loop() {
 
     requestAnimationFrame(loop);
 }
+
+
 
 ajustarResolucion();
 window.addEventListener("resize", ajustarResolucion);
