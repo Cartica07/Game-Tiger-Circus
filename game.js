@@ -26,6 +26,15 @@ const musica = new Audio("sonido.mpeg");
 musica.loop = true;
 musica.volume = 0.5;
 
+
+// Desbloqueo anticipado de audio en móvil
+document.addEventListener("touchstart", function desbloquear() {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (AudioCtx) new AudioCtx().resume();
+    document.removeEventListener("touchstart", desbloquear);
+}, { once: true });
+
+
 // --- SONIDOS DE IMPACTO ---
 const sonidoCohete    = new Audio("impacto1.mpeg");
 const sonidoFrailejon = new Audio("impacto2.mpeg");
@@ -62,9 +71,18 @@ function reproducirImpacto(sonido, offset = 0) {
 }
 
 let musicaIniciada = false;
+
 function iniciarMusica() {
     if (!musicaIniciada) {
-        musica.play().catch(() => {});
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx) {
+            const actx = new AudioCtx();
+            actx.resume().then(() => {
+                musica.play().catch(() => {});
+            });
+        } else {
+            musica.play().catch(() => {});
+        }
         musicaIniciada = true;
     }
 }
