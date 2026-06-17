@@ -28,11 +28,8 @@ musica.volume = 0.5;
 
 
 // Desbloqueo anticipado de audio en móvil
-document.addEventListener("touchstart", function desbloquear() {
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    if (AudioCtx) new AudioCtx().resume();
-    document.removeEventListener("touchstart", desbloquear);
-}, { once: true });
+// (se registra más abajo, después de declarar los sonidos)
+
 
 
 // --- SONIDOS DE IMPACTO ---
@@ -50,6 +47,23 @@ sonidoAgua.volume      = 1.0;
 const OFFSET_COHETE    = 0.0;
 const OFFSET_FRAILEJON = 0.6;
 const OFFSET_AGUA      = 1.0;
+
+// Desbloqueo de audio en móvil: play()+pause() silencioso en el primer toque.
+// En iOS/Android el navegador bloquea audio hasta la primera interacción del usuario.
+// Hacemos esto sobre los HTMLAudioElement directamente (AudioContext.resume() NO es suficiente).
+let audioDesbloqueado = false;
+function desbloquearAudio() {
+    if (audioDesbloqueado) return;
+    audioDesbloqueado = true;
+    [musica, sonidoCohete, sonidoFrailejon, sonidoAgua].forEach(audio => {
+        const p = audio.play();
+        if (p !== undefined) {
+            p.then(() => { audio.pause(); audio.currentTime = 0; }).catch(() => {});
+        }
+    });
+}
+document.addEventListener("touchstart", desbloquearAudio, { once: true });
+document.addEventListener("mousedown",  desbloquearAudio, { once: true });
 
 function reproducirImpacto(sonido, offset = 0) {
     sonido.currentTime = offset;
@@ -73,16 +87,17 @@ function reproducirImpacto(sonido, offset = 0) {
 let musicaIniciada = false;
 
 function iniciarMusica() {
-    if (!musicaIniciada) {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        if (AudioCtx) {
-            const actx = new AudioCtx();
-            actx.resume().then(() => {
-                musica.play().catch(() => {});
-            });
-        } else {
-            musica.play().catch(() => {});
-        }
+    if (musicaIniciada) return;
+    musica.currentTime = 1.0;
+    const promesa = musica.play();
+    if (promesa !== undefined) {
+        promesa.then(() => {
+            musicaIniciada = true; // solo marcamos éxito si realmente arrancó
+        }).catch(() => {
+            // En móvil puede fallar si el audio aún no está desbloqueado;
+            // NO marcamos musicaIniciada=true para poder reintentar
+        });
+    } else {
         musicaIniciada = true;
     }
 }
@@ -408,6 +423,33 @@ function dibujarPuntaje() {
     ctx.textAlign = "left";
 }
 
+function dibujarCreditos() {
+    const totalAncho = 160;
+    const totalAlto = 44;
+    const px = 12;
+    const py = ALTO_PANTALLA - totalAlto - 12;
+
+    ctx.save();
+    ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
+    ctx.strokeStyle = "rgba(255, 180, 50, 0.6)";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.roundRect(px, py, totalAncho, totalAlto, 10);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.textAlign = "left";
+    ctx.font = "bold 12px Arial";
+    ctx.fillStyle = "#AAAAAA";
+    ctx.fillText("Creado por: Carta", px + 10, py + 16);
+
+    ctx.font = "bold 12px Arial";
+    ctx.fillStyle = "#FF8C00";
+    ctx.fillText("IG: Alexander.cv7", px + 10, py + 33);
+
+    ctx.restore();
+}
+
 function dibujarMenu() {
     const pw = Math.min(420, ANCHO_PANTALLA * 0.85);
     const ph = 280;
@@ -628,7 +670,7 @@ function reiniciarJuego() {
     sonidoFrailejon.pause(); sonidoFrailejon.currentTime = 0;
     sonidoAgua.pause(); sonidoAgua.currentTime = 0;
     detenerVideoGato();
-    musica.currentTime = 0;
+    musica.currentTime = 1.0;
     musica.play().catch(() => {});
     camara.x = 0;
     obstaculos = [];
@@ -650,6 +692,7 @@ function loop() {
         ctx.restore();
         jefe.dibujar();
         dibujarMenu();
+        dibujarCreditos();
         requestAnimationFrame(loop);
         return;
     }
@@ -678,6 +721,7 @@ function loop() {
     ctx.restore();
     jefe.dibujar();
     dibujarPuntaje();
+    dibujarCreditos();
 
     if (gameOver) dibujarGameOver();
 
