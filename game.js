@@ -451,7 +451,7 @@ function dibujarCreditos() {
 }
 
 function dibujarMenu() {
-    const pw = Math.min(420, ANCHO_PANTALLA * 0.85);
+    const pw = Math.min(560, ANCHO_PANTALLA * 0.92);
     const ph = 280;
     const px = (ANCHO_PANTALLA - pw) / 2;
     const py = (ALTO_PANTALLA - ph) / 2 - 20;
@@ -488,11 +488,11 @@ function dibujarMenu() {
     ctx.font = "bold 52px Arial Black, Arial";
     ctx.strokeStyle = "#000000";
     ctx.lineWidth = 6;
-    ctx.strokeText("TIGER CIRCUS", 0, 0);
+    ctx.strokeText("VENCE AL TIGRE", 0, 0);
     ctx.fillStyle = "#FF6A00";
-    ctx.fillText("TIGER CIRCUS", 0, 0);
+    ctx.fillText("VENCE AL TIGRE", 0, 0);
     ctx.fillStyle = "rgba(255,200,80,0.35)";
-    ctx.fillText("TIGER CIRCUS", 0, 0);
+    ctx.fillText("VENCE AL TIGRE", 0, 0);
     ctx.restore();
 
     ctx.strokeStyle = "#E8A020";
