@@ -526,8 +526,13 @@ function dibujarMenu() {
 
 function dibujarVideoConChroma(vidX, vidY, vidW, vidH) {
     if (videoGato.readyState < 2) return;
-    canvasChroma.width = vidW;
-    canvasChroma.height = vidH;
+
+    // Solo redimensionar el canvas interno si cambió el tamaño (evita recrear contexto cada frame)
+    if (canvasChroma.width !== vidW || canvasChroma.height !== vidH) {
+        canvasChroma.width  = vidW;
+        canvasChroma.height = vidH;
+    }
+
     ctxChroma.drawImage(videoGato, 0, 0, vidW, vidH);
     const imageData = ctxChroma.getImageData(0, 0, vidW, vidH);
     const data = imageData.data;
@@ -680,7 +685,16 @@ function reiniciarJuego() {
     jefe.framesEnSuelo = 0;
 }
 
-function loop() {
+// Límite de FPS — evita quemar CPU en móviles con pantallas de 90/120Hz
+const FPS_LIMITE = 60;
+const MS_POR_FRAME = 1000 / FPS_LIMITE;
+let ultimoFrame = 0;
+
+function loop(timestamp = 0) {
+    const delta = timestamp - ultimoFrame;
+    if (delta < MS_POR_FRAME) { requestAnimationFrame(loop); return; }
+    ultimoFrame = timestamp - (delta % MS_POR_FRAME);
+
     if (imgFondo.complete) ctx.drawImage(imgFondo, 0, 0, ANCHO_PANTALLA, ALTO_PANTALLA);
     else { ctx.fillStyle = "#3a5fcd"; ctx.fillRect(0, 0, ANCHO_PANTALLA, ALTO_PANTALLA); }
 
