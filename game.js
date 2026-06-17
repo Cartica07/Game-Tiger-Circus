@@ -746,4 +746,83 @@ function loop(timestamp = 0) {
 
 ajustarResolucion();
 window.addEventListener("resize", ajustarResolucion);
-loop();
+
+// --- PANTALLA DE CARGA ---
+const todasLasImagenes = [
+    imgFondo, imgTigre, imgTigre2, imgImpacto, imgChoque, imgChoque2,
+    imgFrailejonSano, imgFrailejonQuemado, imgGato, imgCohete,
+    imgAguaLimpia, imgAguaSucia, imgPiso
+];
+
+let cargadas = 0;
+const total = todasLasImagenes.length;
+
+function dibujarPantallaCarga() {
+    const progreso = cargadas / total;
+
+    // Fondo
+    ctx.fillStyle = "#1a3a1a";
+    ctx.fillRect(0, 0, ANCHO_PANTALLA, ALTO_PANTALLA);
+
+    // Título
+    ctx.textAlign = "center";
+    ctx.font = "bold 48px Arial Black, Arial";
+    ctx.strokeStyle = "#000";
+    ctx.lineWidth = 6;
+    ctx.strokeText("VENCE AL TIGRE", ANCHO_PANTALLA / 2, ALTO_PANTALLA / 2 - 80);
+    ctx.fillStyle = "#FF6A00";
+    ctx.fillText("VENCE AL TIGRE", ANCHO_PANTALLA / 2, ALTO_PANTALLA / 2 - 80);
+
+    // Texto cargando
+    ctx.font = "bold 18px Arial";
+    ctx.fillStyle = "#AAAAAA";
+    ctx.fillText("Cargando...", ANCHO_PANTALLA / 2, ALTO_PANTALLA / 2 - 10);
+
+    // Barra de progreso — fondo
+    const barW = 400, barH = 22;
+    const barX = (ANCHO_PANTALLA - barW) / 2;
+    const barY = ALTO_PANTALLA / 2 + 20;
+    ctx.fillStyle = "rgba(0,0,0,0.5)";
+    ctx.strokeStyle = "rgba(255,180,50,0.6)";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.roundRect(barX, barY, barW, barH, 8);
+    ctx.fill();
+    ctx.stroke();
+
+    // Barra de progreso — relleno
+    if (progreso > 0) {
+        ctx.fillStyle = "#FF6A00";
+        ctx.beginPath();
+        ctx.roundRect(barX + 2, barY + 2, (barW - 4) * progreso, barH - 4, 6);
+        ctx.fill();
+    }
+
+    // Porcentaje
+    ctx.font = "bold 14px Arial";
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillText(Math.round(progreso * 100) + "%", ANCHO_PANTALLA / 2, barY + barH + 24);
+
+    ctx.textAlign = "left";
+}
+
+function loopCarga() {
+    dibujarPantallaCarga();
+    if (cargadas < total) {
+        requestAnimationFrame(loopCarga);
+    } else {
+        loop(); // todas las imágenes listas, arranca el juego
+    }
+}
+
+// Contar imágenes a medida que cargan
+todasLasImagenes.forEach(img => {
+    if (img.complete && img.naturalWidth > 0) {
+        cargadas++;
+    } else {
+        img.addEventListener("load",  () => { cargadas++; });
+        img.addEventListener("error", () => { cargadas++; }); // si falla igual avanza
+    }
+});
+
+loopCarga();
